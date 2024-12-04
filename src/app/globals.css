@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #e7dbf1;
+  --primary-hover: #d7c6e6;
+  --primary-click: #c9b2dd;
+  --secondary: #9c86b1;
+  --tertiary: #604877;
+  --tertiary-hover: #6d5583;
+  --tertiary-click: #7b6491;
+  --text-primary: #201a25;
+}
+
+.text-color {
+  color: var(--text-primary)
+}
+
+.bg-primary {
+  background-color: var(--primary);
+}
+
+.text-secondary {
+  background-color: var(--secondary);
+}
+
+.border-secondary {
+  border-color: var(--secondary);
+}
+
+.border-tertiary {
+  border-color: var(--tertiary);
+}
+
+.text-tertiary {
+  color: var(--tertiary)
+}
+
+.button-panel {
+  background-color: var(--primary);
+  transition: all 0.08s ease-out;
+}
+
+.button-panel:hover {
+  background-color: var(--primary-hover);
+  transition: all 0.08s ease-out;
+}
+
+.button-panel:active {
+  background-color: var(--primary-click);
+  transition: all 0.08s ease-out;
+}
+
+.button {
+  background-color: var(--tertiary);
+}
+
+.button:hover {
+  background-color: var(--tertiary-hover);
+}
+
+.button:active {
+  background-color: var(--tertiary-click);
+}
