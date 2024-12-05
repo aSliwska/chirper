@@ -21,7 +21,7 @@ export default function SideMenu() {
             <MenuButton link={'/followers'} icon={<SmileFilled/>} text={'People who follow you'}/>
 
             <div className="mt-4">
-                <MenuButton link={'/profile'} icon={<ProfilePicture size={48} color={user.avatar_color}/>} text={user.name}/>
+                <MenuButton link={`/profile/${user.id}`} icon={<ProfilePicture size={48} color={user.avatar_color}/>} text={user.name}/>
             </div>
         </div>
     );
