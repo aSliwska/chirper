@@ -1,45 +1,52 @@
 "use client";
 
 import ChirperLogo from "@/components/ChirperLogo";
-import { useCallback, useState } from "react";
+import { createNewUser, DbConnector, getUserFromDb } from "@/logic/DbConnector";
+import { redirect } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 export default function LoginPage() {
-    const [isRegistering, setIsRegistering] = useState(true);
+    const [isRegistering, setIsRegistering] = useState(false);
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [warning, setWarning] = useState("");
 
     const onLogin = useCallback(() => {
         async function login() {
-            const user = await getUserFromDb();
-            if (user === null) {
-
+            const user = await DbConnector.getInstance().getUserFromDb(username, password);
+            if (user !== null) {
+                localStorage.setItem('user', JSON.stringify(user));
+                redirect('/dashboard');
             }
             else {
-
+                setWarning("Wrong username or password.");
             }
         }
         login();
-    }, []);
+    }, [username, password]);
 
     const onRegister = useCallback(() => {
         async function register() {
-            const user = await createNewUser();
-            if (user === null) {
-
+            const user = await DbConnector.getInstance().createNewUser(username, password);
+            if (user !== null) {
+                localStorage.setItem('user', JSON.stringify(user));
+                redirect('/dashboard');
             }
             else {
-                
+                setWarning("Sorry, something went wrong!");
             }
         }
         register();
-    }, []);
+    }, [username, password]);
 
     const changeUsername = useCallback((e) => {
         setUsername(e.target.value);
+        setWarning("");
     }, []);
 
     const changePassword = useCallback((e) => {
         setPassword(e.target.value);
+        setWarning("");
     }, []);
 
     return (
@@ -75,6 +82,8 @@ export default function LoginPage() {
                         <span className="text-sm">Password</span>
                         <input type="password" value={password} onChange={changePassword} className="rounded-md border border-tertiary p-2"/>
                     </div>
+
+                    {(warning.length !== 0) && <span className="text-red-500">{warning}</span>}
 
                     <button 
                         className="button text-white p-3 rounded-md font-bold"

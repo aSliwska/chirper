@@ -1,56 +1,30 @@
+"use client";
 
+import PostList from "@/components/PostList";
+import { DbConnector } from "@/logic/DbConnector";
+import { useEffect, useState } from "react";
 
 export default function Dashboard() {
+    const [user, _] = useState(JSON.parse(localStorage.getItem('user')));
+    const [posts, setPosts] = useState([]);
+
+    useEffect(() => {
+        async function getPosts() {
+            if (user !== null) {
+                const feed = await DbConnector.getInstance().getFeed(user.id);
+                setPosts(feed);
+            }
+        }
+        getPosts();
+    }, [user]);
+    
     return(
-        <div className="bg-secondary flex flex-col w-[650px] h-full items-center border-secondary border relative">
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
-            <span>this is really long text</span>
+        <>
+            <div>
+                {/* input post field */}
             </div>
+
+            <PostList posts={posts}/>
+        </>
     );
 }

@@ -2,14 +2,11 @@
 
 import { HeartFilled, HomeFilled, PushpinFilled, SmileFilled } from "@ant-design/icons";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import ProfilePicture from "./ProfilePicture";
 import ChirperLogo from "./ChirperLogo";
 
 export default function SideMenu() { 
-    // useEffect(() => {
-    //     localStorage.setItem('user', JSON.stringify({id:2,when_joined:'24/02/2024',avatar_color:'#487edb',name:'bookworrm'}))
-    // },[]);
     const [user, _] = useState(JSON.parse(localStorage.getItem('user')));
     
     return (
@@ -24,7 +21,7 @@ export default function SideMenu() {
             <MenuButton link={'/followers'} icon={<SmileFilled/>} text={'People who follow you'}/>
 
             <div className="mt-4">
-                <MenuButton link={'/profile'} icon={<ProfilePicture size={48}/>} text={user.name}/>
+                <MenuButton link={'/profile'} icon={<ProfilePicture size={48} color={user.avatar_color}/>} text={user.name}/>
             </div>
         </div>
     );
