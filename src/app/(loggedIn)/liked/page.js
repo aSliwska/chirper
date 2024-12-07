@@ -19,6 +19,6 @@ export default function Dashboard() {
     }, [user]);
     
     return(
-        <PostList posts={posts}/>
+        <PostList posts={posts} user={user}/>
     );
 }

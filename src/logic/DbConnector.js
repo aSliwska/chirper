@@ -80,11 +80,12 @@ export class DbConnector {
     }
 
     const { records, _, __ } = await this.#driver.executeQuery(
-      'MATCH (:person {id: $id})-[:FOLLOWS]->(f:person) WITH f MATCH (f)-[posted:POSTED]->(p:post) WITH f,posted,p ' + 
-      'OPTIONAL MATCH (p)<-[:REPLY_TO]-(r:comment) WITH r,f,posted,p OPTIONAL MATCH (r)<-[:REPLY_TO *0..]-(rr:comment) ' + 
-      'WITH f,posted,p, count(rr) AS commentNumber OPTIONAL MATCH (p)<-[l:LIKES]-(liker:person) RETURN f.id AS posterId, ' +
-      'f.name AS posterName, f.avatar_color AS posterAvatarColor, count(l) AS likes, liker.id = $id AS didUserLike, ' +
-      'posted.when AS when, p.id AS postId, commentNumber, p.text AS text ORDER BY posted.when DESC',
+      'MATCH (:person {id: $id})-[:FOLLOWS]->(per:person) WITH per MATCH (f:person)-[posted:POSTED]->(p:post) WHERE ' +
+      '(f.id = per.id) OR (f.id = $id) WITH f,posted,p OPTIONAL MATCH (p)<-[:REPLY_TO]-(r:comment) WITH r,f,posted,p ' +
+      'OPTIONAL MATCH (r)<-[:REPLY_TO *0..]-(rr:comment) WITH f,posted,p, count(rr) AS commentNumber OPTIONAL MATCH ' +
+      '(p)<-[l:LIKES]-(:person) RETURN f.id AS posterId, f.name AS posterName, f.avatar_color AS posterAvatarColor, ' +
+      'count(l) AS likes, $id IN COLLECT {MATCH (p)<-[:LIKES]-(liker:person) RETURN liker.id} AS didUserLike, posted.when AS when, ' +
+      'p.id AS postId, commentNumber, p.text AS text ORDER BY posted.when DESC',
       { id: userId },
       { database: 'neo4j' } 
     );
@@ -192,6 +193,90 @@ export class DbConnector {
     );
 
     return { postId: idNumber, when: when };
+  }
+
+  async getPeopleUserFollows(userId) {
+    if (this.#driver === null) {
+      this.#connect();
+    }
+
+    const { records, _, __ } = await this.#driver.executeQuery(
+      'MATCH (:person {id: $userId})-[:FOLLOWS]->(f:person) RETURN f.id as id, f.avatar_color as avatar_color, f.name as name',
+      { userId: userId },
+      { database: 'neo4j' } 
+    );
+
+    return records.map(r => { return {
+      id: this.#toNumber(r.get('id')),
+      avatar_color: r.get('avatar_color'),
+      name: r.get('name'),
+      isUserFollowing: true,
+    }});
+  }
+
+  async getFollowers(userId) {
+    if (this.#driver === null) {
+      this.#connect();
+    }
+
+    const { records, _, __ } = await this.#driver.executeQuery(
+      'MATCH (:person {id: $userId})<-[:FOLLOWS]-(f:person) WITH f RETURN f.id as id, f.avatar_color as avatar_color, f.name as name, ' +
+      '$userId IN COLLECT {MATCH (follower:person)-[:FOLLOWS]->(f) RETURN follower.id} AS isUserFollowing',
+      { userId: userId },
+      { database: 'neo4j' } 
+    );
+
+    return records.map(r => { return {
+      id: this.#toNumber(r.get('id')),
+      avatar_color: r.get('avatar_color'),
+      name: r.get('name'),
+      isUserFollowing: r.get('isUserFollowing') ?? false,
+    }});
+  }
+
+  async follow(userId, personId) {
+    if (this.#driver === null) {
+      this.#connect();
+    }
+
+    const { records, _, __ } = await this.#driver.executeQuery(
+      'MATCH (u:person {id: $userId}), (p:person {id: $personId}) MERGE (u)-[:FOLLOWS]->(p)',
+      { userId: userId, personId: personId },
+      { database: 'neo4j' } 
+    );
+  }
+
+  async unfollow(userId, personId) {
+    if (this.#driver === null) {
+      this.#connect();
+    }
+
+    const { records, _, __ } = await this.#driver.executeQuery(
+      'MATCH (:person {id: $userId})-[r:FOLLOWS]->(:person {id: $personId}) DELETE r',
+      { userId: userId, personId: personId },
+      { database: 'neo4j' } 
+    );
+  }
+
+  async getPeopleSearchResult(query, userId) {
+    if (this.#driver === null) {
+      this.#connect();
+    }
+
+    const { records, _, __ } = await this.#driver.executeQuery(
+      'MATCH (f:person) WHERE (lower(f.name) CONTAINS lower($query)) AND (f.id <> $userId) WITH f RETURN f.id as id, ' +
+      'f.avatar_color as avatar_color, f.name as name, $userId IN COLLECT {MATCH (follower:person)-[:FOLLOWS]->(f) ' +
+      'RETURN follower.id} AS isUserFollowing',
+      { query: query, userId: userId },
+      { database: 'neo4j' } 
+    );
+
+    return records.map(r => { return {
+      id: this.#toNumber(r.get('id')),
+      avatar_color: r.get('avatar_color'),
+      name: r.get('name'),
+      isUserFollowing: r.get('isUserFollowing') ?? false,
+    }});
   }
 }
  

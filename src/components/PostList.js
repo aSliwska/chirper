@@ -7,9 +7,7 @@ import { HeartFilled, HeartOutlined, MessageOutlined } from "@ant-design/icons";
 import { DbConnector } from "@/logic/DbConnector";
 
 
-export default function PostList({ posts }) {
-    const [user, _] = useState(JSON.parse(localStorage.getItem('user')));
-
+export default function PostList({ posts, user }) {
     return (
         <ul>
             {posts.map((post, index) => <Post post={post} user={user} key={index}/>)}

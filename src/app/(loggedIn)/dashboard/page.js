@@ -79,7 +79,7 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            <PostList posts={posts}/>
+            <PostList posts={posts} user={user}/>
         </>
     );
 }
