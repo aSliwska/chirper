@@ -33,7 +33,7 @@ export default function LoginPage() {
                 redirect('/dashboard');
             }
             else {
-                setWarning("Sorry, something went wrong!");
+                setWarning("User with given name already exists or one of the fields is blank.");
             }
         }
         register();

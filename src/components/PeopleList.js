@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import dayjs from "dayjs";
 import { HeartFilled, HeartOutlined, MessageOutlined } from "@ant-design/icons";
 import { DbConnector } from "@/logic/DbConnector";
+import FollowButton from "./FollowButton";
 
 
 export default function PeopleList({ people, user }) {
@@ -22,28 +23,9 @@ export default function PeopleList({ people, user }) {
     isUserFollowing,
 }*/
 function Person({ person, user }) {
-    const [userFollows, setUserFollows] = useState(person.isUserFollowing);
-
     const onClickPerson = useCallback(() => {
         redirect(`/profile/${person.id}`);
     }, [person]);
-
-    const onClickFollow = useCallback((e) => {
-        async function follow() {
-            const nowFollows = !userFollows;
-            
-            if (nowFollows) {
-                await DbConnector.getInstance().follow(user.id, person.id);
-            }
-            else {
-                await DbConnector.getInstance().unfollow(user.id, person.id);
-            }
-            
-            setUserFollows(nowFollows);
-        }
-        e.stopPropagation();
-        follow();
-    }, [userFollows, user, person]);
 
     return (
         <li>
@@ -56,12 +38,7 @@ function Person({ person, user }) {
                     <ProfilePicture size={48} color={person.avatar_color}/>
                     <span className="font-bold">{person.name}</span>
                 </div>
-                <button 
-                    className="button text-white p-3 rounded-md font-bold flex justify-center min-w-24"
-                    onClick={onClickFollow}
-                >
-                    {userFollows ? 'Unfollow' : 'Follow'}
-                </button>
+                <FollowButton personId={person.id} isUserFollowing={person.isUserFollowing} userId={user.id} />
             </div>
         </li>
     );

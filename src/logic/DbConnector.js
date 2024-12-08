@@ -29,7 +29,11 @@ export class DbConnector {
       this.#connect();
     }
 
-    const { records, summary, keys } = await this.#driver.executeQuery(
+    if ((username.length == 0) || (password.length == 0)) {
+      return null;
+    }
+
+    const { records } = await this.#driver.executeQuery(
       'MATCH (p:person {name: $name, password: $password}) RETURN p.id AS id, p.when_joined AS when_joined, p.avatar_color AS avatar_color',
       { name: username, password: password },
       { database: 'neo4j' }
@@ -52,11 +56,25 @@ export class DbConnector {
       this.#connect();
     }
 
+    if ((username.length == 0) || (password.length == 0)) {
+      return null;
+    }
+
+    const { records: records2 } = await this.#driver.executeQuery(
+      'MATCH (p:person { name: $name }) RETURN p.id AS id',
+      { name: username },
+      { database: 'neo4j' }
+    );
+
+    if (records2.length !== 0) {
+      return null;
+    }
+
     const avatar_color = '#' + Math.floor(Math.random()*16777215).toString(16);
     const date = new Date();
     const when_joined = DateTime.fromStandardDate(date); 
 
-    const { records, _, __ } = await this.#driver.executeQuery(
+    const { records } = await this.#driver.executeQuery(
       'MATCH (p:person) RETURN max(p.id) AS max_id',
       { },
       { database: 'neo4j' }
@@ -79,13 +97,12 @@ export class DbConnector {
       this.#connect();
     }
 
-    const { records, _, __ } = await this.#driver.executeQuery(
-      'MATCH (:person {id: $id})-[:FOLLOWS]->(per:person) WITH per MATCH (f:person)-[posted:POSTED]->(p:post) WHERE ' +
-      '(f.id = per.id) OR (f.id = $id) WITH f,posted,p OPTIONAL MATCH (p)<-[:REPLY_TO]-(r:comment) WITH r,f,posted,p ' +
-      'OPTIONAL MATCH (r)<-[:REPLY_TO *0..]-(rr:comment) WITH f,posted,p, count(rr) AS commentNumber OPTIONAL MATCH ' +
-      '(p)<-[l:LIKES]-(:person) RETURN f.id AS posterId, f.name AS posterName, f.avatar_color AS posterAvatarColor, ' +
-      'count(l) AS likes, $id IN COLLECT {MATCH (p)<-[:LIKES]-(liker:person) RETURN liker.id} AS didUserLike, posted.when AS when, ' +
-      'p.id AS postId, commentNumber, p.text AS text ORDER BY posted.when DESC',
+    const { records } = await this.#driver.executeQuery(
+      'MATCH (:person {id: $id})-[:FOLLOWS]->(per:person) WITH per MATCH (f:person)-[posted:POSTED]->(p:post) WHERE (f.id = per.id) OR \
+      (f.id = $id) WITH f,posted,p OPTIONAL MATCH (p)<-[:LIKES]-(l:person) RETURN f.id AS posterId, f.name AS posterName, f.avatar_color \
+      AS posterAvatarColor, count(DISTINCT l.id) AS likes, $id IN collect(DISTINCT l.id) AS didUserLike, posted.when AS when, p.id AS \
+      postId, COUNT { MATCH (p)<-[:REPLY_TO]-(r:comment) WITH r MATCH (r)<-[:REPLY_TO *0..]-(rr:comment) RETURN rr } AS commentNumber, \
+      p.text AS text ORDER BY posted.when DESC',
       { id: userId },
       { database: 'neo4j' } 
     );
@@ -108,12 +125,11 @@ export class DbConnector {
       this.#connect();
     }
 
-    const { records, _, __ } = await this.#driver.executeQuery(
-      'MATCH (:person {id: $id})-[:LIKES]->(p:post) WITH p MATCH (p)<-[posted:POSTED]->(f:person) WITH f,posted,p ' +
-      'OPTIONAL MATCH (p)<-[:REPLY_TO]-(r:comment) WITH r,f,posted,p OPTIONAL MATCH (r)<-[:REPLY_TO *0..]-(rr:comment) ' +
-      'WITH f,posted,p, count(rr) AS commentNumber OPTIONAL MATCH (p)<-[l:LIKES]-(liker:person) RETURN f.id AS posterId, ' +
-      'f.name AS posterName, f.avatar_color AS posterAvatarColor, count(l) AS likes, posted.when AS when, p.id AS postId, ' +
-      'commentNumber, p.text AS text ORDER BY posted.when DESC',
+    const { records } = await this.#driver.executeQuery(
+      'MATCH (:person {id: $id})-[:LIKES]->(p:post) WITH p MATCH (p)<-[posted:POSTED]-(f:person) WITH f,posted,p OPTIONAL MATCH \
+      (p)<-[:LIKES]-(l:person) RETURN f.id AS posterId, f.name AS posterName, f.avatar_color AS posterAvatarColor, count(DISTINCT l.id) \
+      AS likes, posted.when AS when, p.id AS postId, COUNT { MATCH (p)<-[:REPLY_TO]-(r:comment) WITH r MATCH \
+      (r)<-[:REPLY_TO *0..]-(rr:comment) return rr } AS commentNumber, p.text AS text ORDER BY posted.when DESC',
       { id: userId },
       { database: 'neo4j' } 
     );
@@ -174,7 +190,7 @@ export class DbConnector {
       this.#connect();
     }
 
-    const { records, _, __ } = await this.#driver.executeQuery(
+    const { records } = await this.#driver.executeQuery(
       'MATCH (p:post) RETURN max(p.id) AS max_id',
       { },
       { database: 'neo4j' }
@@ -200,7 +216,7 @@ export class DbConnector {
       this.#connect();
     }
 
-    const { records, _, __ } = await this.#driver.executeQuery(
+    const { records } = await this.#driver.executeQuery(
       'MATCH (:person {id: $userId})-[:FOLLOWS]->(f:person) RETURN f.id as id, f.avatar_color as avatar_color, f.name as name',
       { userId: userId },
       { database: 'neo4j' } 
@@ -219,9 +235,9 @@ export class DbConnector {
       this.#connect();
     }
 
-    const { records, _, __ } = await this.#driver.executeQuery(
-      'MATCH (:person {id: $userId})<-[:FOLLOWS]-(f:person) WITH f RETURN f.id as id, f.avatar_color as avatar_color, f.name as name, ' +
-      '$userId IN COLLECT {MATCH (follower:person)-[:FOLLOWS]->(f) RETURN follower.id} AS isUserFollowing',
+    const { records } = await this.#driver.executeQuery(
+      'MATCH (:person {id: $userId})<-[:FOLLOWS]-(f:person) RETURN f.id as id, f.avatar_color as avatar_color, f.name as name, ' +
+      '$userId IN COLLECT { MATCH (follower:person)-[:FOLLOWS]->(f) RETURN follower.id } AS isUserFollowing',
       { userId: userId },
       { database: 'neo4j' } 
     );
@@ -239,7 +255,7 @@ export class DbConnector {
       this.#connect();
     }
 
-    const { records, _, __ } = await this.#driver.executeQuery(
+    await this.#driver.executeQuery(
       'MATCH (u:person {id: $userId}), (p:person {id: $personId}) MERGE (u)-[:FOLLOWS]->(p)',
       { userId: userId, personId: personId },
       { database: 'neo4j' } 
@@ -251,7 +267,7 @@ export class DbConnector {
       this.#connect();
     }
 
-    const { records, _, __ } = await this.#driver.executeQuery(
+    await this.#driver.executeQuery(
       'MATCH (:person {id: $userId})-[r:FOLLOWS]->(:person {id: $personId}) DELETE r',
       { userId: userId, personId: personId },
       { database: 'neo4j' } 
@@ -263,10 +279,9 @@ export class DbConnector {
       this.#connect();
     }
 
-    const { records, _, __ } = await this.#driver.executeQuery(
-      'MATCH (f:person) WHERE (lower(f.name) CONTAINS lower($query)) AND (f.id <> $userId) WITH f RETURN f.id as id, ' +
-      'f.avatar_color as avatar_color, f.name as name, $userId IN COLLECT {MATCH (follower:person)-[:FOLLOWS]->(f) ' +
-      'RETURN follower.id} AS isUserFollowing',
+    const { records } = await this.#driver.executeQuery(
+      'MATCH (f:person) WHERE (lower(f.name) CONTAINS lower($query)) AND (f.id <> $userId) RETURN f.id as id, f.avatar_color \
+      as avatar_color, f.name as name, $userId IN COLLECT { MATCH (follower:person)-[:FOLLOWS]->(f) RETURN follower.id } AS isUserFollowing',
       { query: query, userId: userId },
       { database: 'neo4j' } 
     );
@@ -277,6 +292,116 @@ export class DbConnector {
       name: r.get('name'),
       isUserFollowing: r.get('isUserFollowing') ?? false,
     }});
+  }
+
+  async getProfile(id, userId) {
+    if (this.#driver === null) {
+      this.#connect();
+    }
+
+    const { records } = await this.#driver.executeQuery(
+      'MATCH (f:person {id: $id}) RETURN f.id as id, f.avatar_color as avatar_color, f.name as name, f.when_joined AS when_joined, \
+      $userId IN COLLECT { MATCH (follower:person)-[:FOLLOWS]->(f) RETURN follower.id } AS isUserFollowing',
+      { id: id, userId: userId },
+      { database: 'neo4j' } 
+    );
+
+    return {
+      id: id,
+      avatar_color: records[0].get('avatar_color'),
+      name: records[0].get('name'),
+      when_joined: records[0].get('when_joined').toStandardDate(), 
+      isUserFollowing: records[0].get('isUserFollowing') ?? false,
+    };
+  }
+
+  async getProfilePosts(profileOwner, userId) {
+    if (this.#driver === null) {
+      this.#connect();
+    }
+
+    const { records } = await this.#driver.executeQuery(
+      'MATCH (f:person {id: $id})-[posted:POSTED]->(p:post) WITH f,posted,p OPTIONAL MATCH (p)<-[:LIKES]-(l:person) RETURN \
+      count(DISTINCT l.id) AS likes, $userId IN collect(DISTINCT l.id) AS didUserLike, posted.when AS when, p.id AS postId, \
+      COUNT { MATCH (p)<-[:REPLY_TO]-(r:comment) WITH r MATCH (r)<-[:REPLY_TO *0..]-(rr:comment) RETURN rr } AS commentNumber, \
+      p.text AS text ORDER BY posted.when DESC',
+      { userId: userId, id: profileOwner.id },
+      { database: 'neo4j' } 
+    );
+
+    return records.map(r => { return {
+      posterId: profileOwner.id,
+      posterName: profileOwner.name,
+      posterAvatarColor: profileOwner.avatar_color,
+      likes: this.#toNumber(r.get('likes')),
+      didUserLike: r.get('didUserLike') ?? false,
+      when: r.get('when').toStandardDate(),
+      postId: this.#toNumber(r.get('postId')),
+      commentNumber: this.#toNumber(r.get('commentNumber')),
+      text: r.get('text')
+    }});
+  }
+
+  async getPost(id, userId) {
+    if (this.#driver === null) {
+      this.#connect();
+    }
+
+    const { records } = await this.#driver.executeQuery(
+      'MATCH (f:person)-[posted:POSTED]->(p:post {id: $id}) WITH f,posted,p OPTIONAL MATCH (p)<-[:LIKES]-(l:person) RETURN f.id AS posterId, \
+      f.name AS posterName, f.avatar_color AS posterAvatarColor, count(DISTINCT l.id) AS likes, $userId IN collect(DISTINCT l.id) AS \
+      didUserLike, posted.when AS when, COUNT { MATCH (p)<-[:REPLY_TO]-(r:comment) WITH r MATCH (r)<-[:REPLY_TO *0..]-(rr:comment) \
+      RETURN rr } AS commentNumber, p.text AS text ORDER BY posted.when DESC',
+      { id: id, userId: userId },
+      { database: 'neo4j' } 
+    );
+
+    return {
+      posterId: this.#toNumber(records[0].get('posterId')),
+      posterName: records[0].get('posterName'),
+      posterAvatarColor: records[0].get('posterAvatarColor'),
+      likes: this.#toNumber(records[0].get('likes')),
+      didUserLike: records[0].get('didUserLike') ?? false,
+      when: records[0].get('when').toStandardDate(),
+      postId: id,
+      commentNumber: this.#toNumber(records[0].get('commentNumber')),
+      text: records[0].get('text')
+    };
+  }
+
+  async getComments(postId, userId) {
+    if (this.#driver === null) {
+      this.#connect();
+    }
+
+    const { records } = await this.#driver.executeQuery(
+      'MATCH (:post {id: $postId})<-[:REPLY_TO]-(c:comment)<-[:REPLY_TO *0..]-(cc:comment)<-[commented:COMMENTED]-(f:person) \
+      WITH cc,c,f,commented OPTIONAL MATCH (cc)<-[:LIKES]-(l:person) RETURN cc.id AS commentId, c.id AS parentId, f.id AS posterId, \
+      f.name AS posterName, f.avatar_color AS posterAvatarColor, count(DISTINCT l.id) AS likes, $userId IN collect(DISTINCT l.id) \
+      AS didUserLike, commented.when AS when, COUNT { MATCH (cc)<-[:REPLY_TO *1..]-(r:comment) RETURN r } AS commentNumber, cc.text \
+      AS text ORDER BY commented.when DESC',
+      { postId: postId, userId: userId },
+      { database: 'neo4j' } 
+    );
+
+    return records.map(r => { 
+      const commentId = this.#toNumber(r.get('commentId'));
+      const parentId = this.#toNumber(r.get('parentId'));
+      return {
+        commentId: commentId,
+        parentId: (commentId === parentId) ? null : parentId,
+        posterId: this.#toNumber(r.get('posterId')),
+        posterName: r.get('posterName'),
+        posterAvatarColor: r.get('posterAvatarColor'),
+        likes: this.#toNumber(r.get('likes')),
+        didUserLike: r.get('didUserLike') ?? false,
+        when: r.get('when').toStandardDate(),
+        postId: postId,
+        commentNumber: this.#toNumber(r.get('commentNumber')),
+        text: r.get('text')
+      }
+    });
+
   }
 }
  
