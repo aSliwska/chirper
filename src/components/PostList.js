@@ -26,7 +26,7 @@ export default function PostList({ posts, user }) {
     commentNumber,
     text
 }*/
-export function Postt({ post, user, isClickable }) {
+export function Postt({ post, user, isClickable, onClickComment }) {
     const [userLiked, setUserLiked] = useState(post.didUserLike);
     const [likes, setLikes] = useState(post.likes);
 
@@ -78,7 +78,7 @@ export function Postt({ post, user, isClickable }) {
                         <span className="text-secondary">{likes}</span> 
                     </div>
                     <div className="flex items-center gap-2">
-                        <MessageOutlined style={{ fontSize: 24, color: '#9c86b1' }}/>
+                        <MessageOutlined style={{ fontSize: 24, color: '#9c86b1' }} onClick={(onClickComment !== undefined) ? onClickComment : () => {}}/>
                         <span className="text-secondary">{post.commentNumber}</span>
                     </div>
                     

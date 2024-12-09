@@ -376,20 +376,19 @@ export class DbConnector {
 
     const { records } = await this.#driver.executeQuery(
       'MATCH (:post {id: $postId})<-[:REPLY_TO]-(c:comment)<-[:REPLY_TO *0..]-(cc:comment)<-[commented:COMMENTED]-(f:person) \
-      WITH cc,c,f,commented OPTIONAL MATCH (cc)<-[:LIKES]-(l:person) RETURN cc.id AS commentId, c.id AS parentId, f.id AS posterId, \
-      f.name AS posterName, f.avatar_color AS posterAvatarColor, count(DISTINCT l.id) AS likes, $userId IN collect(DISTINCT l.id) \
-      AS didUserLike, commented.when AS when, COUNT { MATCH (cc)<-[:REPLY_TO *1..]-(r:comment) RETURN r } AS commentNumber, cc.text \
-      AS text ORDER BY commented.when DESC',
+      WITH cc,f,commented OPTIONAL MATCH (cc)<-[:LIKES]-(l:person) RETURN cc.id AS commentId, COLLECT { MATCH \
+      (cc)-[:REPLY_TO]->(parent:comment) RETURN parent.id }[0] AS parentId, f.id AS posterId, f.name AS posterName, f.avatar_color \
+      AS posterAvatarColor, count(DISTINCT l.id) AS likes, $userId IN collect(DISTINCT l.id) AS didUserLike, commented.when AS when, \
+      COUNT { MATCH (cc)<-[:REPLY_TO *1..]-(r:comment) RETURN r } AS commentNumber, cc.text AS text ORDER BY commented.when DESC',
       { postId: postId, userId: userId },
       { database: 'neo4j' } 
     );
 
-    return records.map(r => { 
-      const commentId = this.#toNumber(r.get('commentId'));
-      const parentId = this.#toNumber(r.get('parentId'));
+    return records.map(r => {
+      const temp = r.get('parentId');
       return {
-        commentId: commentId,
-        parentId: (commentId === parentId) ? null : parentId,
+        commentId: this.#toNumber(r.get('commentId')),
+        parentId: (temp !== null) ? this.#toNumber(temp) : null,
         posterId: this.#toNumber(r.get('posterId')),
         posterName: r.get('posterName'),
         posterAvatarColor: r.get('posterAvatarColor'),
@@ -401,7 +400,32 @@ export class DbConnector {
         text: r.get('text')
       }
     });
+  }
 
+  async createComment(userId, draftText, parentId, isParentAPost) {
+    if (this.#driver === null) {
+      this.#connect();
+    }
+
+    const { records } = await this.#driver.executeQuery(
+      'MATCH (c:comment) RETURN max(c.id) AS max_id',
+      { },
+      { database: 'neo4j' }
+    );
+
+    const when = new Date();
+    const when_posted = DateTime.fromStandardDate(when); 
+
+    const idNumber = this.#toNumber(records[0].get('max_id')) + 1;
+    const id = new Integer(idNumber);
+
+    await this.#driver.executeQuery(
+      `CREATE (c:comment {id: $commentId, text: $text}) WITH c MATCH (u:person {id: $userId}) WITH c,u MATCH (p:${isParentAPost ? 'post' : 'comment'} {id: $parentId}) MERGE (u)-[:COMMENTED {when: $when}]->(c) MERGE (c)-[:REPLY_TO]->(p)`,
+      { commentId: id, text: draftText, when: when_posted, userId: userId, parentId: parentId },
+      { database: 'neo4j' }
+    );
+
+    return { commentId: idNumber, when: when };
   }
 }
  
