@@ -6,7 +6,7 @@ import ProfilePicture from "@/components/ProfilePicture";
 import { DbConnector } from "@/logic/DbConnector";
 import dayjs from "dayjs";
 import { redirect, usePathname } from "next/navigation";
-import { use, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function Profile() {
     const [user, _] = useState(JSON.parse(localStorage.getItem('user')));
@@ -49,12 +49,6 @@ export default function Profile() {
         localStorage.setItem('user', null);
         redirect('/');
     }, []);
-    const onClickDeleteAccount = useCallback(() => {
-
-    }, []);
-    const onClickFollow = useCallback(() => {
-
-    }, []);
 
     return (
         <>
@@ -70,10 +64,6 @@ export default function Profile() {
                                 className="button text-white p-3 rounded-md font-bold"
                                 onClick={onClickLogout}
                             >Logout</button>
-                            <button 
-                                className="button text-white p-3 rounded-md font-bold"
-                                onClick={onClickDeleteAccount}
-                            >Delete account</button>
                         </>
                         :
                         <FollowButton personId={profileOwner.id} isUserFollowing={isUserFollowing} userId={user.id} />
