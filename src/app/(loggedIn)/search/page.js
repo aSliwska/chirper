@@ -4,13 +4,16 @@ import PeopleList from "@/components/PeopleList";
 import { DbConnector } from "@/logic/DbConnector";
 import { queryAtom } from "@/store/globals";
 import { useAtomValue } from "jotai";
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function SearchPage() {
-    const [user, _] = useState(JSON.parse(localStorage.getItem('user')));
+    const [user, setUser] = useState(null);
     const query = useAtomValue(queryAtom);
     const [foundPeople, setFoundPeople] = useState([]);
+
+    useEffect(() => {
+        setUser(JSON.parse(localStorage.getItem('user')));
+    }, []);
 
     useEffect(() => {
         async function getPeople() {

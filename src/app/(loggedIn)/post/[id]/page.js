@@ -13,10 +13,14 @@ import { causeUpdateAtom } from "@/store/globals";
 
 export default function Post() {
     const causeUpdate = useAtomValue(causeUpdateAtom);
-    const [user, _] = useState(JSON.parse(localStorage.getItem('user')));
+    const [user, setUser] = useState(null);
     const path = usePathname();
     const [post, setPost] = useState(undefined);
     const [comments, setComments] = useState(undefined);
+
+    useEffect(() => {
+        setUser(JSON.parse(localStorage.getItem('user')));
+    }, []);
 
     useEffect(() => {
         async function getPost() {
@@ -193,9 +197,11 @@ function WriteCommentField({ user, setComments, comments, index, parentId, postI
 
     return (
         <div className="border-b border-secondary flex flex-row p-4 gap-4 bg-primary-darker">
-            <Link href={`/profile/${user.id}`} className="h-fit">
-                <ProfilePicture size={48} color={user.avatar_color}/>
-            </Link>
+            {user &&
+                <Link href={`/profile/${user.id}`} className="h-fit">
+                    <ProfilePicture size={48} color={user.avatar_color}/>
+                </Link>
+            }
             <div className="flex gap-4 w-full h-full">
                 <textarea
                     className="text-tertiary placeholder:text-[#9c86b1] bg-primary-darker p-2 w-full h-full min-h-[50px] resize-none"

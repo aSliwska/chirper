@@ -7,7 +7,11 @@ import ProfilePicture from "./ProfilePicture";
 import ChirperLogo from "./ChirperLogo";
 
 export default function SideMenu() { 
-    const [user, _] = useState(JSON.parse(localStorage.getItem('user')));
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        setUser(JSON.parse(localStorage.getItem('user')));
+    }, []);
     
     return (
         <div className="flex flex-col pe-6 fixed">
@@ -21,7 +25,7 @@ export default function SideMenu() {
             <MenuButton link={'/followers'} icon={<SmileFilled/>} text={'People who follow you'}/>
 
             <div className="mt-4 font-bold">
-                <MenuButton link={`/profile/${user.id}`} icon={<ProfilePicture size={48} color={user.avatar_color}/>} text={user.name}/>
+                {user && <MenuButton link={`/profile/${user.id}`} icon={<ProfilePicture size={48} color={user.avatar_color}/>} text={user.name}/>}
             </div>
         </div>
     );

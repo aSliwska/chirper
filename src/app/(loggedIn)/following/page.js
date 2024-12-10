@@ -5,8 +5,12 @@ import { DbConnector } from "@/logic/DbConnector";
 import { useEffect, useState } from "react";
 
 export default function Following() {
-    const [user, _] = useState(JSON.parse(localStorage.getItem('user')));
+    const [user, setUser] = useState(null);
     const [following, setFollowing] = useState([]);
+
+    useEffect(() => {
+        setUser(JSON.parse(localStorage.getItem('user')));
+    }, []);
 
     useEffect(() => {
         async function getPeople() {

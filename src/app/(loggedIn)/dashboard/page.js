@@ -7,8 +7,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export default function Dashboard() {
-    const [user, _] = useState(JSON.parse(localStorage.getItem('user')));
+    const [user, setUser] = useState(null);
     const [posts, setPosts] = useState([]);
+
+    useEffect(() => {
+        setUser(JSON.parse(localStorage.getItem('user')));
+    }, []);
     
     useEffect(() => {
         async function getPosts() {
@@ -68,9 +72,11 @@ function WritePostField({ user, setPosts, posts }) {
 
     return (
         <div className="border-b border-secondary flex flex-row p-4 gap-4 bg-primary-darker">
-            <Link href={`/profile/${user.id}`} className="h-fit">
-                <ProfilePicture size={48} color={user.avatar_color}/>
-            </Link>
+            {user && 
+                <Link href={`/profile/${user.id}`} className="h-fit">
+                    <ProfilePicture size={48} color={user.avatar_color}/>
+                </Link>
+            }
             <div className="flex flex-col gap-4 w-full h-full">
                 <textarea
                     className="text-tertiary placeholder:text-[#9c86b1] bg-primary-darker p-2 w-full h-full min-h-[50px] resize-none"

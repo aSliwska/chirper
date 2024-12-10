@@ -9,11 +9,15 @@ import { redirect, usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 export default function Profile() {
-    const [user, _] = useState(JSON.parse(localStorage.getItem('user')));
+    const [user, setUser] = useState(null);
     const path = usePathname();
     const [profileOwner, setProfileOwner] = useState(undefined);
     const [isUserFollowing, setIsUserFollowing] = useState(false);
     const [posts, setPosts] = useState(undefined);
+
+    useEffect(() => {
+        setUser(JSON.parse(localStorage.getItem('user')));
+    }, []);
 
     useEffect(() => {
         async function getPerson() {
@@ -53,7 +57,7 @@ export default function Profile() {
     return (
         <>
             <div className="flex flex-col gap-4 border-b border-secondary p-4">
-                {profileOwner && <>
+                {(profileOwner && user) && <>
                     <ProfilePicture size={128} color={profileOwner.avatar_color}/>
                     <span className="font-bold text-xl">{profileOwner.name}</span>
                     <span className="text-secondary">Joined: {dayjs(profileOwner.when_joined).format('DD/MM/YYYY')}</span>
