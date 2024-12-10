@@ -2,7 +2,7 @@
 
 import { HeartFilled, HomeFilled, PushpinFilled, SmileFilled } from "@ant-design/icons";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ProfilePicture from "./ProfilePicture";
 import ChirperLogo from "./ChirperLogo";
 
