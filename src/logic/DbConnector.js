@@ -1,6 +1,5 @@
 import neo4j, { DateTime, Integer } from 'neo4j-driver';
 import { dbURL, dbUser, dbPassword } from "@/store/secrets";
-import dayjs from 'dayjs';
 
 
 export class DbConnector {
